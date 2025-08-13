@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environmental Data Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .dark .gradient-bg {
+            background: linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%);
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <div class="gradient-bg text-white p-6 shadow-lg">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold">Environmental Monitor</h1>
+                        <p class="text-blue-100 mt-1">Real-time environmental data collection</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="pulse-dot w-3 h-3 bg-green-400 rounded-full"></div>
+                        <span class="text-sm">Live Data</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto p-6">
+            <!-- Status Bar -->
+            <div class="mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">Last Update:</span>
+                        <span id="lastUpdate" class="font-mono text-sm">--</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button id="pauseBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors text-sm">
+                            Pause
+                        </button>
+                        <button id="exportBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                            Export Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Temperature -->
+                <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Temperature</h3>
+                        <div class="text-2xl">🌡️</div>
+                    </div>
+                    <div class="text-3xl font-bold text-primary" id="temp-value">--°C</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="temp-status">Loading...</div>
+                </div>
+
+                <!-- Humidity -->
+                <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Humidity</h3>
+                        <div class="text-2xl">💧</div>
+                    </div>
+                    <div class="text-3xl font-bold text-blue-600" id="humidity-value">--%</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="humidity-status">Loading...</div>
+                </div>
+
+                <!-- Air Quality Index -->
+                <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Air Quality</h3>
+                        <div class="text-2xl">🏭</div>
+                    </div>
+                    <div class="text-3xl font-bold" id="aqi-value">-- AQI</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="aqi-status">Loading...</div>
+                </div>
+
+                <!-- UV Index -->
+                <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">UV Index</h3>
+                        <div class="text-2xl">☀️</div>
+                    </div>
+                    <div class="text-3xl font-bold text-yellow-600" id="uv-value">--</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="uv-status">Loading...</div>
+                </div>
+
+                <!-- Atmospheric Pressure -->
+                <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Pressure</h3>
+                        <div class="text-2xl">📊</div>
+                    </div>
+                    <div class="text-3xl font-bold text-purple-600" id="pressure-value">-- hPa</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="pressure-status">Loading...</div>
+                </div>
+
+                <!-- Noise Level -->
+                <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Noise Level</h3>
+                        <div class="text-2xl">🔊</div>
+                    </div>
+                    <div class="text-3xl font-bold text-orange-600" id="noise-value">-- dB</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="noise-status">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Temperature & Humidity Chart -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold mb-4">Temperature & Humidity Trends</h3>
+                    <canvas id="tempHumidityChart" width="400" height="200"></canvas>
+                </div>
+
+                <!-- Air Quality Chart -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold mb-4">Air Quality Index</h3>
+                    <canvas id="aqiChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Environmental data simulation
+        class EnvironmentalMonitor {
+            constructor() {
+                this.isRunning = true;
+                this.data = {
+                    temperature: [],
+                    humidity: [],
+                    aqi: [],
+                    uv: [],
+                    pressure: [],
+                    noise: [],
+                    timestamps: []
+                };
+                this.maxDataPoints = 20;
+                this.charts = {};
+                this.initCharts();
+                this.startMonitoring();
+            }
+
+            generateRealisticData() {
+                const now = new Date();
+                const hour = now.getHours();
+                
+                // Simulate realistic environmental patterns
+                const baseTemp = 20 + Math.sin((hour - 6) / 24 * 2 * Math.PI) * 8;
+                const temperature = baseTemp + (Math.random() - 0.5) * 3;
+                
+                const baseHumidity = 60 + Math.sin((hour - 12) / 24 * 2 * Math.PI) * 20;
+                const humidity = Math.max(20, Math.min(90, baseHumidity + (Math.random() - 0.5) * 10));
+                
+                const aqi = Math.max(0, Math.min(300, 80 + Math.sin(hour / 24 * 2 * Math.PI) * 40 + (Math.random() - 0.5) * 30));
+                
+                const uv = Math.max(0, Math.min(12, Math.sin((hour - 6) / 12 * Math.PI) * 8 + (Math.random() - 0.5) * 2));
+                
+                const pressure = 1013 + Math.sin(hour / 24 * 2 * Math.PI) * 20 + (Math.random() - 0.5) * 10;
+                
+                const noise = 45 + Math.random() * 30 + (hour > 6 && hour < 22 ? 15 : 0);
+
+                return {
+                    temperature: Math.round(temperature * 10) / 10,
+                    humidity: Math.round(humidity),
+                    aqi: Math.round(aqi),
+                    uv: Math.round(uv * 10) / 10,
+                    pressure: Math.round(pressure * 10) / 10,
+                    noise: Math.round(noise),
+                    timestamp: now
+                };
+            }
+
+            updateData() {
+                if (!this.isRunning) return;
+
+                const newData = this.generateRealisticData();
+                
+                // Add new data
+                Object.keys(this.data).forEach(key => {
+                    if (key !== 'timestamps') {
+                        this.data[key].push(newData[key]);
+                        if (this.data[key].length > this.maxDataPoints) {
+                            this.data[key].shift();
+                        }
+                    }
+                });
+                
+                this.data.timestamps.push(newData.timestamp);
+                if (this.data.timestamps.length > this.maxDataPoints) {
+                    this.data.timestamps.shift();
+                }
+
+                this.updateUI(newData);
+                this.updateCharts();
+            }
+
+            updateUI(data) {
+                // Update values
+                document.getElementById('temp-value').textContent = `${data.temperature}°C`;
+                document.getElementById('humidity-value').textContent = `${data.humidity}%`;
+                document.getElementById('aqi-value').textContent = `${data.aqi} AQI`;
+                document.getElementById('uv-value').textContent = data.uv;
+                document.getElementById('pressure-value').textContent = `${data.pressure} hPa`;
+                document.getElementById('noise-value').textContent = `${data.noise} dB`;
+
+                // Update status messages
+                document.getElementById('temp-status').textContent = this.getTemperatureStatus(data.temperature);
+                document.getElementById('humidity-status').textContent = this.getHumidityStatus(data.humidity);
+                document.getElementById('aqi-status').textContent = this.getAQIStatus(data.aqi);
+                document.getElementById('uv-status').textContent = this.getUVStatus(data.uv);
+                document.getElementById('pressure-status').textContent = this.getPressureStatus(data.pressure);
+                document.getElementById('noise-status').textContent = this.getNoiseStatus(data.noise);
+
+                // Update AQI color
+                const aqiElement = document.getElementById('aqi-value');
+                aqiElement.className = `text-3xl font-bold ${this.getAQIColor(data.aqi)}`;
+
+                // Update last update time
+                document.getElementById('lastUpdate').textContent = data.timestamp.toLocaleTimeString();
+            }
+
+            getTemperatureStatus(temp) {
+                if (temp < 10) return "Very Cold";
+                if (temp < 18) return "Cold";
+                if (temp < 25) return "Comfortable";
+                if (temp < 30) return "Warm";
+                return "Hot";
+            }
+
+            getHumidityStatus(humidity) {
+                if (humidity < 30) return "Dry";
+                if (humidity < 60) return "Comfortable";
+                if (humidity < 80) return "Humid";
+                return "Very Humid";
+            }
+
+            getAQIStatus(aqi) {
+                if (aqi <= 50) return "Good";
+                if (aqi <= 100) return "Moderate";
+                if (aqi <= 150) return "Unhealthy for Sensitive";
+                if (aqi <= 200) return "Unhealthy";
+                if (aqi <= 300) return "Very Unhealthy";
+                return "Hazardous";
+            }
+
+            getAQIColor(aqi) {
+                if (aqi <= 50) return "text-green-600";
+                if (aqi <= 100) return "text-yellow-600";
+                if (aqi <= 150) return "text-orange-600";
+                if (aqi <= 200) return "text-red-600";
+                if (aqi <= 300) return "text-purple-600";
+                return "text-red-800";
+            }
+
+            getUVStatus(uv) {
+                if (uv <= 2) return "Low";
+                if (uv <= 5) return "Moderate";
+                if (uv <= 7) return "High";
+                if (uv <= 10) return "Very High";
+                return "Extreme";
+            }
+
+            getPressureStatus(pressure) {
+                if (pressure < 1000) return "Low Pressure";
+                if (pressure < 1020) return "Normal";
+                return "High Pressure";
+            }
+
+            getNoiseStatus(noise) {
+                if (noise < 40) return "Very Quiet";
+                if (noise < 60) return "Quiet";
+                if (noise < 80) return "Moderate";
+                return "Loud";
+            }
+
+            initCharts() {
+                const isDark = document.documentElement.classList.contains('dark');
+                const textColor = isDark ? '#e5e7eb' : '#374151';
+                const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+                // Temperature & Humidity Chart
+                const tempHumidityCtx = document.getElementById('tempHumidityChart').getContext('2d');
+                this.charts.tempHumidity = new Chart(tempHumidityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Temperature (°C)',
+                            data: [],
+                            borderColor: '#5D5CDE',
+                            backgroundColor: 'rgba(93, 92, 222, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        }, {
+                            label: 'Humidity (%)',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Time',
+                                    color: textColor
+                                },
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Temperature (°C)',
+                                    color: textColor
+                                },
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Humidity (%)',
+                                    color: textColor
+                                },
+                                ticks: { color: textColor },
+                                grid: { drawOnChartArea: false, color: gridColor }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { color: textColor }
+                            }
+                        }
+                    }
+                });
+
+                // AQI Chart
+                const aqiCtx = document.getElementById('aqiChart').getContext('2d');
+                this.charts.aqi = new Chart(aqiCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Air Quality Index',
+                            data: [],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Time',
+                                    color: textColor
+                                },
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'AQI',
+                                    color: textColor
+                                },
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { color: textColor }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateCharts() {
+                const labels = this.data.timestamps.map(t => t.toLocaleTimeString());
+                
+                // Update Temperature & Humidity Chart
+                this.charts.tempHumidity.data.labels = labels;
+                this.charts.tempHumidity.data.datasets[0].data = this.data.temperature;
+                this.charts.tempHumidity.data.datasets[1].data = this.data.humidity;
+                this.charts.tempHumidity.update('none');
+
+                // Update AQI Chart
+                this.charts.aqi.data.labels = labels;
+                this.charts.aqi.data.datasets[0].data = this.data.aqi;
+                this.charts.aqi.update('none');
+            }
+
+            startMonitoring() {
+                // Initial data load
+                this.updateData();
+                
+                // Set up interval for real-time updates
+                this.interval = setInterval(() => {
+                    this.updateData();
+                }, 3000); // Update every 3 seconds
+            }
+
+            pause() {
+                this.isRunning = !this.isRunning;
+                return this.isRunning;
+            }
+
+            exportData() {
+                const exportData = {
+                    timestamp: new Date().toISOString(),
+                    data: this.data
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `environmental-data-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Initialize the application
+        let monitor;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            monitor = new EnvironmentalMonitor();
+            
+            // Set up event handlers
+            document.getElementById('pauseBtn').addEventListener('click', function() {
+                const isRunning = monitor.pause();
+                this.textContent = isRunning ? 'Pause' : 'Resume';
+                this.className = isRunning ? 
+                    'px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors text-sm' :
+                    'px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm';
+            });
+            
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                monitor.exportData();
+            });
+        });
+    </script>
+</body>
+</html>
