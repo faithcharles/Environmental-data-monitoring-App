@@ -12,7 +12,6 @@ A real-time environmental data monitoring web application that simulates collect
 - Data export functionality
 
 ## Demo
-[Live Demo](https://yourusername.github.io/environmental-monitor-app)
-
+[Live Demo](https://faithcharles.github.io/Environmental-data-Monitoring-App)
 ## Usage
 Simply open `index.html` in a web browser or visit the live demo link.
